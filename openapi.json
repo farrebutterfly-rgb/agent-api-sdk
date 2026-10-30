@@ -1,0 +1,3810 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "agent-api-sdk extraction and review API",
+    "version": "0.1.0",
+    "description": "Document extraction with human review. Every error body has the Error shape. Test auth: Bearer tokens of seeded test users (see README). Responses are validated against these schemas by the server before they are sent."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8787",
+      "description": "local demo"
+    }
+  ],
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "Liveness and build info",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "server is up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "summary": "The authenticated user",
+        "responses": {
+          "200": {
+            "description": "user and rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/samples": {
+      "get": {
+        "summary": "Sample documents",
+        "responses": {
+          "200": {
+            "description": "samples (no text)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SampleList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs": {
+      "post": {
+        "summary": "Create an extraction job",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,128}$"
+            },
+            "description": "Same key and body returns the existing job (200, created false). Same key, other body: 409. Keys are scoped per user."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "replay of the same key and body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateJobResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT with issues, INVALID_JSON or MISSING_IDEMPOTENCY_KEY",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "IDEMPOTENCY_KEY_REUSED with job_id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "BODY_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List your jobs (newest first, max 100)",
+        "responses": {
+          "200": {
+            "description": "jobs of the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{id}": {
+      "get": {
+        "summary": "Get a job with steps, document text and review",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^job_[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobWithText"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "unknown job, or a job of another user (JOB_NOT_FOUND); the two are indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{id}/corrections": {
+      "post": {
+        "summary": "Record a human correction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^job_[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "correction stored; the model proposal is unchanged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT: unknown field, wrong type, quote not in the document, null without reason",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "unknown job, or a job of another user (JOB_NOT_FOUND); the two are indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "JOB_NOT_READY",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{id}/approve": {
+      "post": {
+        "summary": "Approve the current draft",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^job_[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproveResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "unknown job, or a job of another user (JOB_NOT_FOUND); the two are indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "APPROVAL_BLOCKED (unacknowledged error findings) or JOB_NOT_READY",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{id}/export": {
+      "post": {
+        "summary": "Write and return the approved local draft",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^job_[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "draft written under the server data directory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or unknown token (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "unknown job, or a job of another user (JOB_NOT_FOUND); the two are indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NOT_APPROVED (never approved, or corrected after the last approval) or JOB_NOT_READY",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate limit reached (RATE_LIMITED); see Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "seconds until the window resets"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "CreateJobRequest": {
+        "type": "object",
+        "properties": {
+          "sample": {
+            "type": "string",
+            "pattern": "^INV-\\d{3}$"
+          },
+          "document": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]{0,79}$"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 20,
+                "maxLength": 20000
+              }
+            },
+            "required": [
+              "name",
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "architecture": {
+            "type": "string",
+            "enum": [
+              "two-agent",
+              "single-agent"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateJobResponse": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ]
+          },
+          "created": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "created"
+        ],
+        "additionalProperties": false
+      },
+      "CorrectionRequest": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "supplier",
+              "invoice_number",
+              "invoice_date",
+              "due_date",
+              "currency",
+              "net",
+              "vat",
+              "total",
+              "org_number"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "number",
+              "null"
+            ]
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "field",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "CorrectionResponse": {
+        "type": "object",
+        "properties": {
+          "correction": {
+            "type": "object",
+            "properties": {
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string"
+              },
+              "reviewer": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string",
+                "enum": [
+                  "supplier",
+                  "invoice_number",
+                  "invoice_date",
+                  "due_date",
+                  "currency",
+                  "net",
+                  "vat",
+                  "total",
+                  "org_number"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "null"
+                ]
+              },
+              "quote": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "previous": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": [
+                      "string",
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "model",
+                      "human"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "seq",
+              "ts",
+              "reviewer",
+              "field",
+              "value",
+              "quote",
+              "previous"
+            ],
+            "additionalProperties": false
+          },
+          "job": {
+            "type": "object",
+            "properties": {
+              "job_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "running",
+                  "succeeded",
+                  "failed"
+                ]
+              },
+              "idempotency_key": {
+                "type": "string"
+              },
+              "architecture": {
+                "type": "string",
+                "enum": [
+                  "two-agent",
+                  "single-agent"
+                ]
+              },
+              "document": {
+                "type": "object",
+                "properties": {
+                  "document_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "sample",
+                      "upload"
+                    ]
+                  },
+                  "chars": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "document_id",
+                  "name",
+                  "source",
+                  "chars",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "done",
+                        "failed"
+                      ]
+                    },
+                    "attempts": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "last_error": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "transient": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "transient"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "started_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "finished_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "status",
+                    "attempts",
+                    "last_error",
+                    "started_at",
+                    "finished_at"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "transient": {
+                        "type": "boolean"
+                      },
+                      "step": {
+                        "type": "string"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "transient",
+                      "step",
+                      "attempts"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "review": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "in_review",
+                          "approved",
+                          "exported"
+                        ]
+                      },
+                      "blocking": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "extraction": {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "fixture",
+                              "live"
+                            ]
+                          },
+                          "architecture": {
+                            "type": "string",
+                            "enum": [
+                              "two-agent",
+                              "single-agent"
+                            ]
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "model_calls": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "tool_calls": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "mode",
+                          "architecture",
+                          "model",
+                          "status",
+                          "model_calls",
+                          "tool_calls"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "fields": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "supplier",
+                            "invoice_number",
+                            "invoice_date",
+                            "due_date",
+                            "currency",
+                            "net",
+                            "vat",
+                            "total",
+                            "org_number"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "quote": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "confidence": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "model",
+                                "human"
+                              ]
+                            },
+                            "proposed": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "quote": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "confidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "reason": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "quote"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "corrected_at": {
+                              "type": "string"
+                            },
+                            "corrected_by": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "quote",
+                            "source",
+                            "proposed"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "required": [
+                          "supplier",
+                          "invoice_number",
+                          "invoice_date",
+                          "due_date",
+                          "currency",
+                          "net",
+                          "vat",
+                          "total",
+                          "org_number"
+                        ]
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "severity": {
+                              "type": "string",
+                              "enum": [
+                                "error",
+                                "warning",
+                                "info"
+                              ]
+                            },
+                            "field": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "validator",
+                                "orchestrator"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "severity",
+                            "message",
+                            "source"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "proposal_findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "severity": {
+                              "type": "string",
+                              "enum": [
+                                "error",
+                                "warning",
+                                "info"
+                              ]
+                            },
+                            "field": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "validator",
+                                "orchestrator"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "severity",
+                            "message",
+                            "source"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "corrections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "seq": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ts": {
+                              "type": "string"
+                            },
+                            "reviewer": {
+                              "type": "string"
+                            },
+                            "field": {
+                              "type": "string",
+                              "enum": [
+                                "supplier",
+                                "invoice_number",
+                                "invoice_date",
+                                "due_date",
+                                "currency",
+                                "net",
+                                "vat",
+                                "total",
+                                "org_number"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "quote": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "note": {
+                              "type": "string"
+                            },
+                            "previous": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "model",
+                                    "human"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "source"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "seq",
+                            "ts",
+                            "reviewer",
+                            "field",
+                            "value",
+                            "quote",
+                            "previous"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "approvals": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "ts": {
+                              "type": "string"
+                            },
+                            "reviewer": {
+                              "type": "string"
+                            },
+                            "corrections_seen": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "acknowledged": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "draft_sha256": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "ts",
+                            "reviewer",
+                            "corrections_seen",
+                            "acknowledged",
+                            "draft_sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "exported_at": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "blocking",
+                      "extraction",
+                      "fields",
+                      "findings",
+                      "proposal_findings",
+                      "corrections",
+                      "approvals",
+                      "exported_at"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "job_id",
+              "status",
+              "idempotency_key",
+              "architecture",
+              "document",
+              "created_at",
+              "updated_at",
+              "steps",
+              "error",
+              "review"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "correction",
+          "job"
+        ],
+        "additionalProperties": false
+      },
+      "ApproveRequest": {
+        "type": "object",
+        "properties": {
+          "acknowledge": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z_]{2,64}$"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApproveResponse": {
+        "type": "object",
+        "properties": {
+          "approval": {
+            "type": "object",
+            "properties": {
+              "ts": {
+                "type": "string"
+              },
+              "reviewer": {
+                "type": "string"
+              },
+              "corrections_seen": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "acknowledged": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "draft_sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ts",
+              "reviewer",
+              "corrections_seen",
+              "acknowledged",
+              "draft_sha256"
+            ],
+            "additionalProperties": false
+          },
+          "job": {
+            "type": "object",
+            "properties": {
+              "job_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "running",
+                  "succeeded",
+                  "failed"
+                ]
+              },
+              "idempotency_key": {
+                "type": "string"
+              },
+              "architecture": {
+                "type": "string",
+                "enum": [
+                  "two-agent",
+                  "single-agent"
+                ]
+              },
+              "document": {
+                "type": "object",
+                "properties": {
+                  "document_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "sample",
+                      "upload"
+                    ]
+                  },
+                  "chars": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "document_id",
+                  "name",
+                  "source",
+                  "chars",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "done",
+                        "failed"
+                      ]
+                    },
+                    "attempts": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "last_error": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "transient": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message",
+                            "transient"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "started_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "finished_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "status",
+                    "attempts",
+                    "last_error",
+                    "started_at",
+                    "finished_at"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "transient": {
+                        "type": "boolean"
+                      },
+                      "step": {
+                        "type": "string"
+                      },
+                      "attempts": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "transient",
+                      "step",
+                      "attempts"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "review": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "in_review",
+                          "approved",
+                          "exported"
+                        ]
+                      },
+                      "blocking": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "extraction": {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "fixture",
+                              "live"
+                            ]
+                          },
+                          "architecture": {
+                            "type": "string",
+                            "enum": [
+                              "two-agent",
+                              "single-agent"
+                            ]
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "model_calls": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "tool_calls": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "mode",
+                          "architecture",
+                          "model",
+                          "status",
+                          "model_calls",
+                          "tool_calls"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "fields": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "supplier",
+                            "invoice_number",
+                            "invoice_date",
+                            "due_date",
+                            "currency",
+                            "net",
+                            "vat",
+                            "total",
+                            "org_number"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "quote": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "confidence": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "model",
+                                "human"
+                              ]
+                            },
+                            "proposed": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "quote": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "confidence": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "reason": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "quote"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "corrected_at": {
+                              "type": "string"
+                            },
+                            "corrected_by": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "quote",
+                            "source",
+                            "proposed"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "required": [
+                          "supplier",
+                          "invoice_number",
+                          "invoice_date",
+                          "due_date",
+                          "currency",
+                          "net",
+                          "vat",
+                          "total",
+                          "org_number"
+                        ]
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "severity": {
+                              "type": "string",
+                              "enum": [
+                                "error",
+                                "warning",
+                                "info"
+                              ]
+                            },
+                            "field": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "validator",
+                                "orchestrator"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "severity",
+                            "message",
+                            "source"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "proposal_findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string"
+                            },
+                            "severity": {
+                              "type": "string",
+                              "enum": [
+                                "error",
+                                "warning",
+                                "info"
+                              ]
+                            },
+                            "field": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "validator",
+                                "orchestrator"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "severity",
+                            "message",
+                            "source"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "corrections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "seq": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ts": {
+                              "type": "string"
+                            },
+                            "reviewer": {
+                              "type": "string"
+                            },
+                            "field": {
+                              "type": "string",
+                              "enum": [
+                                "supplier",
+                                "invoice_number",
+                                "invoice_date",
+                                "due_date",
+                                "currency",
+                                "net",
+                                "vat",
+                                "total",
+                                "org_number"
+                              ]
+                            },
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "quote": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "note": {
+                              "type": "string"
+                            },
+                            "previous": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "model",
+                                    "human"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "source"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "seq",
+                            "ts",
+                            "reviewer",
+                            "field",
+                            "value",
+                            "quote",
+                            "previous"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "approvals": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "ts": {
+                              "type": "string"
+                            },
+                            "reviewer": {
+                              "type": "string"
+                            },
+                            "corrections_seen": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "acknowledged": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "draft_sha256": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "ts",
+                            "reviewer",
+                            "corrections_seen",
+                            "acknowledged",
+                            "draft_sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "exported_at": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "blocking",
+                      "extraction",
+                      "fields",
+                      "findings",
+                      "proposal_findings",
+                      "corrections",
+                      "approvals",
+                      "exported_at"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "job_id",
+              "status",
+              "idempotency_key",
+              "architecture",
+              "document",
+              "created_at",
+              "updated_at",
+              "steps",
+              "error",
+              "review"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "approval",
+          "job"
+        ],
+        "additionalProperties": false
+      },
+      "ExportResponse": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "draft": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "local-draft"
+              },
+              "note": {
+                "type": "string"
+              },
+              "doc_id": {
+                "type": "string"
+              },
+              "doc_sha256": {
+                "type": "string"
+              },
+              "exported_at": {
+                "type": "string"
+              },
+              "approved": {
+                "type": "object",
+                "properties": {
+                  "ts": {
+                    "type": "string"
+                  },
+                  "reviewer": {
+                    "type": "string"
+                  },
+                  "corrections_seen": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "acknowledged": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "draft_sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ts",
+                  "reviewer",
+                  "corrections_seen",
+                  "acknowledged",
+                  "draft_sha256"
+                ],
+                "additionalProperties": false
+              },
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "enum": [
+                    "supplier",
+                    "invoice_number",
+                    "invoice_date",
+                    "due_date",
+                    "currency",
+                    "net",
+                    "vat",
+                    "total",
+                    "org_number"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "string",
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "quote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "model",
+                        "human"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "quote",
+                    "source"
+                  ],
+                  "additionalProperties": false
+                },
+                "required": [
+                  "supplier",
+                  "invoice_number",
+                  "invoice_date",
+                  "due_date",
+                  "currency",
+                  "net",
+                  "vat",
+                  "total",
+                  "org_number"
+                ]
+              },
+              "model_proposal": {
+                "type": "object",
+                "properties": {
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "architecture": {
+                    "type": "string",
+                    "enum": [
+                      "two-agent",
+                      "single-agent"
+                    ]
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "fixture",
+                      "live"
+                    ]
+                  },
+                  "model": {
+                    "type": "string"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "enum": [
+                        "supplier",
+                        "invoice_number",
+                        "invoice_date",
+                        "due_date",
+                        "currency",
+                        "net",
+                        "vat",
+                        "total",
+                        "org_number"
+                      ]
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": [
+                            "string",
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "quote": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "confidence": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "reason": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "quote"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "required": [
+                      "supplier",
+                      "invoice_number",
+                      "invoice_date",
+                      "due_date",
+                      "currency",
+                      "net",
+                      "vat",
+                      "total",
+                      "org_number"
+                    ]
+                  }
+                },
+                "required": [
+                  "created_at",
+                  "architecture",
+                  "mode",
+                  "model",
+                  "fields"
+                ],
+                "additionalProperties": false
+              },
+              "corrections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "seq": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "ts": {
+                      "type": "string"
+                    },
+                    "reviewer": {
+                      "type": "string"
+                    },
+                    "field": {
+                      "type": "string",
+                      "enum": [
+                        "supplier",
+                        "invoice_number",
+                        "invoice_date",
+                        "due_date",
+                        "currency",
+                        "net",
+                        "vat",
+                        "total",
+                        "org_number"
+                      ]
+                    },
+                    "value": {
+                      "type": [
+                        "string",
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "quote": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "previous": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": [
+                            "string",
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "model",
+                            "human"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "seq",
+                    "ts",
+                    "reviewer",
+                    "field",
+                    "value",
+                    "quote",
+                    "previous"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "error",
+                        "warning",
+                        "info"
+                      ]
+                    },
+                    "field": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "validator",
+                        "orchestrator"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "severity",
+                    "message",
+                    "source"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "note",
+              "doc_id",
+              "doc_sha256",
+              "exported_at",
+              "approved",
+              "fields",
+              "model_proposal",
+              "corrections",
+              "findings"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "file",
+          "draft"
+        ],
+        "additionalProperties": false
+      },
+      "Job": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ]
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "architecture": {
+            "type": "string",
+            "enum": [
+              "two-agent",
+              "single-agent"
+            ]
+          },
+          "document": {
+            "type": "object",
+            "properties": {
+              "document_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "sample",
+                  "upload"
+                ]
+              },
+              "chars": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "document_id",
+              "name",
+              "source",
+              "chars",
+              "sha256"
+            ],
+            "additionalProperties": false
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "done",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "last_error": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "transient": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "transient"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "started_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "finished_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "status",
+                "attempts",
+                "last_error",
+                "started_at",
+                "finished_at"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "transient": {
+                    "type": "boolean"
+                  },
+                  "step": {
+                    "type": "string"
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "transient",
+                  "step",
+                  "attempts"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "review": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "in_review",
+                      "approved",
+                      "exported"
+                    ]
+                  },
+                  "blocking": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "extraction": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "fixture",
+                          "live"
+                        ]
+                      },
+                      "architecture": {
+                        "type": "string",
+                        "enum": [
+                          "two-agent",
+                          "single-agent"
+                        ]
+                      },
+                      "model": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "model_calls": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "tool_calls": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "mode",
+                      "architecture",
+                      "model",
+                      "status",
+                      "model_calls",
+                      "tool_calls"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "enum": [
+                        "supplier",
+                        "invoice_number",
+                        "invoice_date",
+                        "due_date",
+                        "currency",
+                        "net",
+                        "vat",
+                        "total",
+                        "org_number"
+                      ]
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": [
+                            "string",
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "quote": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "confidence": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "model",
+                            "human"
+                          ]
+                        },
+                        "proposed": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "quote": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "confidence": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "reason": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "quote"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "corrected_at": {
+                          "type": "string"
+                        },
+                        "corrected_by": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "quote",
+                        "source",
+                        "proposed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "required": [
+                      "supplier",
+                      "invoice_number",
+                      "invoice_date",
+                      "due_date",
+                      "currency",
+                      "net",
+                      "vat",
+                      "total",
+                      "org_number"
+                    ]
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "enum": [
+                            "error",
+                            "warning",
+                            "info"
+                          ]
+                        },
+                        "field": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "validator",
+                            "orchestrator"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "message",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "proposal_findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "enum": [
+                            "error",
+                            "warning",
+                            "info"
+                          ]
+                        },
+                        "field": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "validator",
+                            "orchestrator"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "message",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "corrections": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "seq": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "ts": {
+                          "type": "string"
+                        },
+                        "reviewer": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "supplier",
+                            "invoice_number",
+                            "invoice_date",
+                            "due_date",
+                            "currency",
+                            "net",
+                            "vat",
+                            "total",
+                            "org_number"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "string",
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "quote": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "model",
+                                "human"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "source"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "seq",
+                        "ts",
+                        "reviewer",
+                        "field",
+                        "value",
+                        "quote",
+                        "previous"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "approvals": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "ts": {
+                          "type": "string"
+                        },
+                        "reviewer": {
+                          "type": "string"
+                        },
+                        "corrections_seen": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "acknowledged": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "draft_sha256": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "ts",
+                        "reviewer",
+                        "corrections_seen",
+                        "acknowledged",
+                        "draft_sha256"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "exported_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "blocking",
+                  "extraction",
+                  "fields",
+                  "findings",
+                  "proposal_findings",
+                  "corrections",
+                  "approvals",
+                  "exported_at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "idempotency_key",
+          "architecture",
+          "document",
+          "created_at",
+          "updated_at",
+          "steps",
+          "error",
+          "review"
+        ],
+        "additionalProperties": false
+      },
+      "JobWithText": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ]
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "architecture": {
+            "type": "string",
+            "enum": [
+              "two-agent",
+              "single-agent"
+            ]
+          },
+          "document": {
+            "type": "object",
+            "properties": {
+              "document_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "sample",
+                  "upload"
+                ]
+              },
+              "chars": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "document_id",
+              "name",
+              "source",
+              "chars",
+              "sha256"
+            ],
+            "additionalProperties": false
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "done",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "last_error": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "transient": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "transient"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "started_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "finished_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "status",
+                "attempts",
+                "last_error",
+                "started_at",
+                "finished_at"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "transient": {
+                    "type": "boolean"
+                  },
+                  "step": {
+                    "type": "string"
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "transient",
+                  "step",
+                  "attempts"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "review": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "in_review",
+                      "approved",
+                      "exported"
+                    ]
+                  },
+                  "blocking": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "extraction": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "fixture",
+                          "live"
+                        ]
+                      },
+                      "architecture": {
+                        "type": "string",
+                        "enum": [
+                          "two-agent",
+                          "single-agent"
+                        ]
+                      },
+                      "model": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "model_calls": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "tool_calls": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "mode",
+                      "architecture",
+                      "model",
+                      "status",
+                      "model_calls",
+                      "tool_calls"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "fields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "enum": [
+                        "supplier",
+                        "invoice_number",
+                        "invoice_date",
+                        "due_date",
+                        "currency",
+                        "net",
+                        "vat",
+                        "total",
+                        "org_number"
+                      ]
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": [
+                            "string",
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "quote": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "confidence": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "model",
+                            "human"
+                          ]
+                        },
+                        "proposed": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "quote": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "confidence": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "reason": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "quote"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "corrected_at": {
+                          "type": "string"
+                        },
+                        "corrected_by": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "quote",
+                        "source",
+                        "proposed"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "required": [
+                      "supplier",
+                      "invoice_number",
+                      "invoice_date",
+                      "due_date",
+                      "currency",
+                      "net",
+                      "vat",
+                      "total",
+                      "org_number"
+                    ]
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "enum": [
+                            "error",
+                            "warning",
+                            "info"
+                          ]
+                        },
+                        "field": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "validator",
+                            "orchestrator"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "message",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "proposal_findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "enum": [
+                            "error",
+                            "warning",
+                            "info"
+                          ]
+                        },
+                        "field": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "validator",
+                            "orchestrator"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "message",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "corrections": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "seq": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "ts": {
+                          "type": "string"
+                        },
+                        "reviewer": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "supplier",
+                            "invoice_number",
+                            "invoice_date",
+                            "due_date",
+                            "currency",
+                            "net",
+                            "vat",
+                            "total",
+                            "org_number"
+                          ]
+                        },
+                        "value": {
+                          "type": [
+                            "string",
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "quote": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "note": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": [
+                                "string",
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "model",
+                                "human"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "source"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "seq",
+                        "ts",
+                        "reviewer",
+                        "field",
+                        "value",
+                        "quote",
+                        "previous"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "approvals": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "ts": {
+                          "type": "string"
+                        },
+                        "reviewer": {
+                          "type": "string"
+                        },
+                        "corrections_seen": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "acknowledged": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "draft_sha256": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "ts",
+                        "reviewer",
+                        "corrections_seen",
+                        "acknowledged",
+                        "draft_sha256"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "exported_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "blocking",
+                  "extraction",
+                  "fields",
+                  "findings",
+                  "proposal_findings",
+                  "corrections",
+                  "approvals",
+                  "exported_at"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "document_text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "idempotency_key",
+          "architecture",
+          "document",
+          "created_at",
+          "updated_at",
+          "steps",
+          "error",
+          "review",
+          "document_text"
+        ],
+        "additionalProperties": false
+      },
+      "JobList": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "job_id": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "queued",
+                    "running",
+                    "succeeded",
+                    "failed"
+                  ]
+                },
+                "document_name": {
+                  "type": "string"
+                },
+                "review_state": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "in_review",
+                        "approved",
+                        "exported"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "created_at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "job_id",
+                "status",
+                "document_name",
+                "review_state",
+                "created_at"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ],
+        "additionalProperties": false
+      },
+      "SampleList": {
+        "type": "object",
+        "properties": {
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "chars": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "case": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "chars",
+                "case"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "samples"
+        ],
+        "additionalProperties": false
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "test_user": {
+            "type": "boolean"
+          },
+          "rate_limit": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "window_seconds": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "limit",
+              "window_seconds"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "user_id",
+          "name",
+          "test_user",
+          "rate_limit"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "version": {
+            "type": "string"
+          },
+          "extraction_mode": {
+            "type": "string",
+            "enum": [
+              "fixture",
+              "live"
+            ]
+          },
+          "web_build": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "version",
+          "extraction_mode",
+          "web_build"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "INVALID_INPUT",
+                  "INVALID_JSON",
+                  "MISSING_IDEMPOTENCY_KEY",
+                  "BODY_TOO_LARGE",
+                  "UNAUTHENTICATED",
+                  "JOB_NOT_FOUND",
+                  "NOT_FOUND",
+                  "METHOD_NOT_ALLOWED",
+                  "IDEMPOTENCY_KEY_REUSED",
+                  "JOB_NOT_READY",
+                  "APPROVAL_BLOCKED",
+                  "NOT_APPROVED",
+                  "RATE_LIMITED",
+                  "INTERNAL"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "request_id": {
+                "type": "string"
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "job_id": {
+                "type": "string"
+              },
+              "retry_after_seconds": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "request_id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

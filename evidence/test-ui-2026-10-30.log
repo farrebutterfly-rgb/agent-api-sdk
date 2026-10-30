@@ -1,0 +1,18 @@
+{"type":"session","ts":"2026-10-30T05:47:23Z","code_rev":"de78777","dataset":"invoices-v1 (7 samples from review-workflow)","node":"v22.23.4","python":"Python 3.13.18","mode":"fixture","suite":"make test-ui"}
+$ PLAYWRIGHT=1 node --test test/ui.playwright.test.ts
+TAP version 13
+# Subtest: web UI: the SDK's job reviewed in the browser, a job started in the browser, a denied read
+ok 1 - web UI: the SDK's job reviewed in the browser, a job started in the browser, a denied read
+  ---
+  duration_ms: 6520.63872
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7125.153831

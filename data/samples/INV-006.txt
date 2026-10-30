@@ -1,0 +1,17 @@
+Brightwater Catering Oy
+Y-tunnus: 2847731-5
+Aleksanterinkatu 9, Helsinki
+
+INVOICE / FAKTURA
+
+Invoice number: BWC-5520
+Invoice date: 03/04/2026
+Due date: 03/05/2026
+Currency: EUR
+
+Conference lunch, 45 persons                  1,575.00
+Coffee and pastries, 2 sessions                 360.00
+
+Net amount: 1,935.00
+VAT 14%: 270.90
+Total due: 2,205.90

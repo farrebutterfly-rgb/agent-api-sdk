@@ -1,0 +1,8 @@
+{
+  "test_only": true,
+  "note": "PUBLIC TEST TOKENS for the local demo, tests and examples. Anyone can read them, so they protect nothing. A deployment must use its own users file (see README).",
+  "tokens": {
+    "a": "ers_test_H3i1NnKCXyQj_p9iSjv1c6C2",
+    "b": "ers_test_lcQSrCCJErOsOY1mSaheWwKK"
+  }
+}

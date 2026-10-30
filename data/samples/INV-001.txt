@@ -1,0 +1,28 @@
+Norrsken Kontorsvaror AB
+Hamngatan 12, 111 47 Stockholm
+Org.nr: 556712-3401
+Momsreg.nr: SE556712340101
+
+FAKTURA
+
+Fakturanummer: 2026-0418
+Fakturadatum: 2026-09-14
+Förfallodatum: 2026-10-14
+Kundnummer: K-2231
+
+Kund:
+Bergslagens Byggservice AB
+Kund org.nr: 559102-7788
+Smedjegatan 4, 702 10 Örebro
+
+Artikel                         Antal   à-pris      Belopp
+Kopieringspapper A4 80 g          40     62,50     2 500,00
+Pärmar A4 bred rygg               60     41,00     2 460,00
+Whiteboardpennor 4-pack           25     78,00     1 950,00
+
+Netto: 6 910,00
+Moms 25 %: 1 727,50
+Att betala: 8 637,50
+Valuta: SEK
+
+Bankgiro 5512-0934. Ange fakturanummer vid betalning.

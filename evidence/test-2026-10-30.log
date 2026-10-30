@@ -1,0 +1,321 @@
+{"type":"session","ts":"2026-10-30T05:47:07Z","code_rev":"de78777","dataset":"invoices-v1 (7 samples from review-workflow)","node":"v22.23.4","python":"Python 3.13.18","mode":"fixture","suite":"make test"}
+$ python3 -m unittest discover -s vendor/review-workflow/validator -v
+test_bad_json_exits_2 (test_validate.CommandLine.test_bad_json_exits_2) ... ok
+test_round_trip (test_validate.CommandLine.test_round_trip) ... ok
+test_unknown_check_exits_2 (test_validate.CommandLine.test_unknown_check_exits_2) ... ok
+test_due_before_invoice (test_validate.Dates.test_due_before_invoice) ... ok
+test_missing_date_is_not_checkable (test_validate.Dates.test_missing_date_is_not_checkable) ... ok
+test_same_day_is_fine (test_validate.Dates.test_same_day_is_fine) ... ok
+test_flags_each_null_field_as_warning (test_validate.Missing.test_flags_each_null_field_as_warning) ... ok
+test_quote_must_be_exact_substring (test_validate.Quotes.test_quote_must_be_exact_substring) ... ok
+test_value_without_quote (test_validate.Quotes.test_value_without_quote) ... ok
+test_consistent (test_validate.Totals.test_consistent) ... ok
+test_float_rounding_is_not_a_mismatch (test_validate.Totals.test_float_rounding_is_not_a_mismatch) ... ok
+test_mismatch (test_validate.Totals.test_mismatch) ... ok
+test_missing_amount_is_not_checkable (test_validate.Totals.test_missing_amount_is_not_checkable) ... ok
+test_negative_credit_note (test_validate.Totals.test_negative_credit_note) ... ok
+test_within_tolerance (test_validate.Totals.test_within_tolerance) ... ok
+test_absent_key_is_an_error (test_validate.TypesAndRequired.test_absent_key_is_an_error) ... ok
+test_clean_extraction_has_no_findings (test_validate.TypesAndRequired.test_clean_extraction_has_no_findings) ... ok
+test_null_needs_a_reason (test_validate.TypesAndRequired.test_null_needs_a_reason) ... ok
+test_unknown_field (test_validate.TypesAndRequired.test_unknown_field) ... ok
+test_wrong_types (test_validate.TypesAndRequired.test_wrong_types) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.093s
+
+OK
+
+$ python3.10 -m unittest discover -s vendor/review-workflow/validator
+....................
+----------------------------------------------------------------------
+Ran 20 tests in 0.087s
+
+OK
+
+$ npm test   (PLAYWRIGHT unset: the browser test skips here and runs in the UI log)
+
+> agent-api-sdk@0.1.0 test
+> node --no-warnings=ExperimentalWarning --import tsx --test --test-concurrency=1 test/*.test.ts
+
+TAP version 13
+# Subtest: API
+    # Subtest: SDK field names are the review-workflow field names
+    ok 1 - SDK field names are the review-workflow field names
+      ---
+      duration_ms: 1.672701
+      type: 'test'
+      ...
+    # Subtest: healthz needs no token
+    ok 2 - healthz needs no token
+      ---
+      duration_ms: 29.406369
+      type: 'test'
+      ...
+    # Subtest: 401 for a missing, malformed or unknown token
+    ok 3 - 401 for a missing, malformed or unknown token
+      ---
+      duration_ms: 18.837764
+      type: 'test'
+      ...
+    # Subtest: 400 with field issues for invalid input
+    ok 4 - 400 with field issues for invalid input
+      ---
+      duration_ms: 48.010817
+      type: 'test'
+      ...
+    # Subtest: Idempotency-Key: replay returns the same job, another body gets 409, keys are per user
+    ok 5 - Idempotency-Key: replay returns the same job, another body gets 409, keys are per user
+      ---
+      duration_ms: 355.989992
+      type: 'test'
+      ...
+    # Subtest: another user's job is 404, exactly like an unknown job
+    ok 6 - another user's job is 404, exactly like an unknown job
+      ---
+      duration_ms: 538.327299
+      type: 'test'
+      ...
+    # Subtest: full review flow: fields with quotes, correction, approve, export; proposal untouched
+    ok 7 - full review flow: fields with quotes, correction, approve, export; proposal untouched
+      ---
+      duration_ms: 723.413402
+      type: 'test'
+      ...
+    # Subtest: validator errors block approval until fixed or acknowledged
+    ok 8 - validator errors block approval until fixed or acknowledged
+      ---
+      duration_ms: 526.755752
+      type: 'test'
+      ...
+    # Subtest: upload a text document, single-agent baseline
+    ok 9 - upload a text document, single-agent baseline
+      ---
+      duration_ms: 172.094633
+      type: 'test'
+      ...
+    # Subtest: unknown routes and wrong methods
+    ok 10 - unknown routes and wrong methods
+      ---
+      duration_ms: 5.09412
+      type: 'test'
+      ...
+    # Subtest: samples and me
+    ok 11 - samples and me
+      ---
+      duration_ms: 6.921319
+      type: 'test'
+      ...
+    # Subtest: structured log has no tokens and no document text
+    ok 12 - structured log has no tokens and no document text
+      ---
+      duration_ms: 177.067999
+      type: 'test'
+      ...
+    1..12
+ok 1 - API
+  ---
+  duration_ms: 2637.110189
+  type: 'suite'
+  ...
+# Subtest: rate limit and not-ready jobs
+    # Subtest: 429 with Retry-After per token; other users unaffected
+    ok 1 - 429 with Retry-After per token; other users unaffected
+      ---
+      duration_ms: 22.199035
+      type: 'test'
+      ...
+    # Subtest: review actions on a job that has not finished give 409 JOB_NOT_READY
+    ok 2 - review actions on a job that has not finished give 409 JOB_NOT_READY
+      ---
+      duration_ms: 1588.178394
+      type: 'test'
+      ...
+    # Subtest: web build missing gives a clear 503, API still works
+    ok 3 - web build missing gives a clear 503, API still works
+      ---
+      duration_ms: 15.56028
+      type: 'test'
+      ...
+    # Subtest: live mode without ANTHROPIC_API_KEY refuses to start with a clear message
+    ok 4 - live mode without ANTHROPIC_API_KEY refuses to start with a clear message
+      ---
+      duration_ms: 1.728263
+      type: 'test'
+      ...
+    # Subtest: test users are refused in production unless allowed
+    ok 5 - test users are refused in production unless allowed
+      ---
+      duration_ms: 8.896096
+      type: 'test'
+      ...
+    1..5
+ok 2 - rate limit and not-ready jobs
+  ---
+  duration_ms: 1637.045266
+  type: 'suite'
+  ...
+# Subtest: end to end: one server, the web build, the SDK example, the Python client, the smoke script
+    # Subtest: the web build exists and is served by the API server
+    ok 1 - the web build exists and is served by the API server
+      ---
+      duration_ms: 43.909393
+      type: 'test'
+      ...
+    # Subtest: examples/sdk-client.ts completes a job through the API
+    ok 2 - examples/sdk-client.ts completes a job through the API
+      ---
+      duration_ms: 1225.533314
+      type: 'test'
+      ...
+    # Subtest: examples/python_client.py runs against the same API
+    ok 3 - examples/python_client.py runs against the same API
+      ---
+      duration_ms: 272.47043
+      type: 'test'
+      ...
+    # Subtest: scripts/smoke.sh passes against the running server
+    ok 4 - scripts/smoke.sh passes against the running server
+      ---
+      duration_ms: 605.867519
+      type: 'test'
+      ...
+    # Subtest: the server log of the whole run holds no token and no document text
+    ok 5 - the server log of the whole run holds no token and no document text
+      ---
+      duration_ms: 0.555331
+      type: 'test'
+      ...
+    1..5
+ok 3 - end to end: one server, the web build, the SDK example, the Python client, the smoke script
+  ---
+  duration_ms: 2768.913254
+  type: 'suite'
+  ...
+# Subtest: repo contracts
+    # Subtest: openapi.json is generated from the current zod schemas
+    ok 1 - openapi.json is generated from the current zod schemas
+      ---
+      duration_ms: 307.789329
+      type: 'test'
+      ...
+    # Subtest: scripts/check-vendor.sh: copies match the recorded commits (or skips without siblings)
+    ok 2 - scripts/check-vendor.sh: copies match the recorded commits (or skips without siblings)
+      ---
+      duration_ms: 158.040183
+      type: 'test'
+      ...
+    # Subtest: no file:../ dependencies
+    ok 3 - no file:../ dependencies
+      ---
+      duration_ms: 1.090254
+      type: 'test'
+      ...
+    1..3
+ok 4 - repo contracts
+  ---
+  duration_ms: 467.693498
+  type: 'suite'
+  ...
+# Subtest: SDK against a spawned server process
+    # Subtest: completes a job: create (twice), wait, correct, approve, export
+    ok 1 - completes a job: create (twice), wait, correct, approve, export
+      ---
+      duration_ms: 765.396705
+      type: 'test'
+      ...
+    # Subtest: typed errors: 400 issues, 401, 404 for another user, 409 key reuse
+    ok 2 - typed errors: 400 issues, 401, 404 for another user, 409 key reuse
+      ---
+      duration_ms: 624.288578
+      type: 'test'
+      ...
+    # Subtest: waitForJob times out with a typed error
+    ok 3 - waitForJob times out with a typed error
+      ---
+      duration_ms: 608.510696
+      type: 'test'
+      ...
+    1..3
+ok 5 - SDK against a spawned server process
+  ---
+  duration_ms: 2557.506768
+  type: 'suite'
+  ...
+# Subtest: SDK rate limit and response validation
+    # Subtest: 429 becomes ApiError with retryAfterSeconds
+    ok 1 - 429 becomes ApiError with retryAfterSeconds
+      ---
+      duration_ms: 547.302008
+      type: 'test'
+      ...
+    # Subtest: a 2xx body that breaks the schema is rejected, not passed on
+    ok 2 - a 2xx body that breaks the schema is rejected, not passed on
+      ---
+      duration_ms: 2.247179
+      type: 'test'
+      ...
+    # Subtest: a non-JSON error page becomes UNEXPECTED_RESPONSE
+    ok 3 - a non-JSON error page becomes UNEXPECTED_RESPONSE
+      ---
+      duration_ms: 0.599709
+      type: 'test'
+      ...
+    1..3
+ok 6 - SDK rate limit and response validation
+  ---
+  duration_ms: 550.549748
+  type: 'suite'
+  ...
+# Subtest: restart recovery through the API
+    # Subtest: server killed mid-job; a new server process on the same data finishes it without re-running done steps
+    ok 1 - server killed mid-job; a new server process on the same data finishes it without re-running done steps
+      ---
+      duration_ms: 2189.750484
+      type: 'test'
+      ...
+    1..1
+ok 7 - restart recovery through the API
+  ---
+  duration_ms: 2190.359231
+  type: 'suite'
+  ...
+# Subtest: web UI: the SDK's job reviewed in the browser, a job started in the browser, a denied read
+ok 8 - web UI: the SDK's job reviewed in the browser, a job started in the browser, a denied read # SKIP set PLAYWRIGHT=1 to run the browser test
+  ---
+  duration_ms: 0.895962
+  type: 'test'
+  ...
+# Subtest: fixed window: limit per key, reset at the window boundary
+ok 9 - fixed window: limit per key, reset at the window boundary
+  ---
+  duration_ms: 1.813579
+  type: 'test'
+  ...
+# Subtest: tokens: only hashes in the users file, known tokens map to their user
+ok 10 - tokens: only hashes in the users file, known tokens map to their user
+  ---
+  duration_ms: 3.800857
+  type: 'test'
+  ...
+# Subtest: users file is validated
+ok 11 - users file is validated
+  ---
+  duration_ms: 2.217024
+  type: 'test'
+  ...
+# Subtest: logger writes only allowlisted keys and cuts long strings
+ok 12 - logger writes only allowlisted keys and cuts long strings
+  ---
+  duration_ms: 0.889137
+  type: 'test'
+  ...
+1..12
+# tests 37
+# suites 7
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 16014.170476

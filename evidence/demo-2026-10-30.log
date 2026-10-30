@@ -1,0 +1,65 @@
+{"type":"session","ts":"2026-10-30T05:47:04.266Z","code_rev":"de78777","dataset":"invoices-v1 (7 samples from review-workflow)","node":"v22.23.4","python":"Python 3.13.18","mode":"fixture"}
+agent-api-sdk demo  (fixture extraction, scripted models, no API key, no cost)  rev=de78777
+server started on http://127.0.0.1:33305 (pid 6954), data in .data/demo-1793339224271 (kept after the demo; .data/ is git-ignored)
+
+$ npm run example -- INV-016   (examples/sdk-client.ts, typed SDK)
+API http://127.0.0.1:33305  version 0.1.0  extraction fixture  as u_test_a (test user)
+
+create INV-016  key=sdk-example-70e5dba7  -> job_775187afaf0d created=true
+create INV-016  key=sdk-example-70e5dba7  -> job_775187afaf0d created=false  (same job: true)
+  status queued    read_document=pending extract_fields=pending open_review=pending
+  status running   read_document=running extract_fields=pending open_review=pending
+  status running   read_document=done extract_fields=running open_review=pending
+  status running   read_document=done extract_fields=done open_review=running
+  status succeeded read_document=done extract_fields=done open_review=done
+
+fields (two-agent, fixture, 19 model calls)
+  supplier        null                   model  reason: no supplier found in the document
+  invoice_number  null                   model  reason: no invoice_number found in the document
+  invoice_date    "2026-09-30"           model  quote: "2026-09-30"
+  due_date        "2026-10-30"           model  quote: "2026-10-30"
+  currency        "SEK"                  model  quote: "SEK"
+  net             null                   model  reason: no net found in the document
+  vat             2500                   model  quote: "2 500,00"
+  total           12500                  model  quote: "12 500,00"
+  org_number      "969712-4410"          model  quote: "969712-4410"
+validator findings:
+  info    TOTALS_NOT_CHECKABLE: net + vat = total not checked, missing: net
+  warning MISSING_VALUE (supplier): no value: no supplier found in the document
+  warning MISSING_VALUE (invoice_number): no value: no invoice_number found in the document
+  warning MISSING_VALUE (net): no value: no net found in the document
+
+corrections
+  #1 supplier: null -> "Mälarö Måleri HB"  quote "Mälarö Måleri HB"  by u_test_a
+  #2 invoice_number: null -> "7731"  quote "Faktura 7731"  by u_test_a
+  #3 net: null -> 10000  quote "10 000,00"  by u_test_a
+
+approved by u_test_a after 3 corrections; review state approved
+exported exports/u_test_a/job_775187afaf0d.draft.json
+  draft fields from the model: 6, from the reviewer: 3 (supplier, invoice_number, net)
+  model proposal kept unchanged in the export: 3 fields still null there
+  remaining validator findings: none
+
+second user reads job_775187afaf0d: 404 JOB_NOT_FOUND "no job job_775187afaf0d for this user"
+empty create request: 400 INVALID_INPUT (root): send exactly one of sample or document
+
+done: job_775187afaf0d succeeded, review local-draft exported
+
+$ python3 examples/python_client.py INV-005   (stdlib Python client)
+python: bad token -> 401 UNAUTHENTICATED
+python: created job_241762b1a928 for INV-005 -> 201
+python: job succeeded
+python:   supplier        "Sörmlands Städ & Fönster AB" quote 'Sörmlands Städ & Fönster AB'
+python:   invoice_number  "SF-3381"                    quote 'SF-3381'
+python:   invoice_date    "2026-09-05"                 quote '2026-09-05'
+python:   due_date        "2026-10-05"                 quote '2026-10-05'
+python:   currency        "SEK"                        quote 'SEK'
+python:   net             6950                         quote '6 950,00'
+python:   vat             1737.5                       quote '1 737,50'
+python:   total           8867.5                       quote '8 867,50'
+python:   org_number      "559345-2210"                quote '559345-2210'
+python: validator findings ['TOTAL_MISMATCH']
+
+server stopped. structured log: 51 lines in evidence/demo-server-2026-10-30.jsonl; token or document-text occurrences: 0
+web build present: yes (open the server URL to use the UI)
+demo OK

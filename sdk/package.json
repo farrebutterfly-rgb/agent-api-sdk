@@ -1,0 +1,11 @@
+{
+  "name": "extract-review-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Typed TypeScript client for the agent-api-sdk extraction and review API. Every response is validated with zod.",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

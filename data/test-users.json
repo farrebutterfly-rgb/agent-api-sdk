@@ -1,0 +1,16 @@
+{
+  "test_only": true,
+  "note": "TEST USERS ONLY. Hashes of the public test tokens in data/test-tokens.json. Never use these outside a local demo.",
+  "users": [
+    {
+      "user_id": "u_test_a",
+      "name": "Test user A",
+      "token_sha256": "dacb9e7eaf26f648f537e76e4e0b8a36229b3656bf57dbefaf5c1c54a1ad5930"
+    },
+    {
+      "user_id": "u_test_b",
+      "name": "Test user B",
+      "token_sha256": "e7fc8793a8374a4e3e7b6bf2c6d868c1a47b435c174d5e67832296fa71f32e1a"
+    }
+  ]
+}

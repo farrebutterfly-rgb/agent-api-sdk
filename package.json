@@ -1,0 +1,29 @@
+{
+  "name": "agent-api-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Document extraction with human review as a small web product: HTTP API with test auth and rate limits, React review UI, typed TypeScript SDK, Python validator.",
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "workspaces": ["sdk", "web"],
+  "scripts": {
+    "serve": "node --no-warnings=ExperimentalWarning --import tsx server/main.ts",
+    "demo": "node --no-warnings=ExperimentalWarning --import tsx scripts/demo.ts",
+    "example": "node --no-warnings=ExperimentalWarning --import tsx examples/sdk-client.ts",
+    "smoke": "node --no-warnings=ExperimentalWarning --import tsx scripts/smoke.ts",
+    "openapi": "node --no-warnings=ExperimentalWarning --import tsx scripts/gen-openapi.ts",
+    "build": "npm run build --workspace web",
+    "test": "node --no-warnings=ExperimentalWarning --import tsx --test --test-concurrency=1 test/*.test.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p web"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.3.0",
+    "extract-review-sdk": "0.1.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}
